@@ -38,11 +38,12 @@ const adjustCount = (n) => {
 };
 
 const startGame = () => {
-    if (players.value.length !== playerCount.value) {
-        players.value = Array.from({ length: playerCount.value }, (_, i) => ({
-            id: i, score: 0, color: colors[i]
-        }));
-    }
+    players.value = Array.from({ length: playerCount.value }, (_, i) => ({
+        id: i, 
+        score: 0, 
+        color: colors[i]
+    }));
+    
     step.value = 'game';
 };
 
