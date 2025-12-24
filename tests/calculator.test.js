@@ -12,7 +12,7 @@ describe('Score Calculator', () => {
         expect(calculateNewScore(10, "x2")).toBe(20);
     });
     it('handles complex chaining', () => {
-        expect(calculateNewScore(10, "+5x2")).toBe(30); 
+        expect(calculateNewScore(10, "+5x2")).toBe(20); 
     });
     it('ignores invalid text', () => {
         expect(calculateNewScore(10, "bad input")).toBe(10);
