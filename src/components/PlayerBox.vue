@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { ref, nextTick, defineProps, defineEmits } from 'vue';
 import { calculateNewScore } from '../logic/calculator';
 
 const props = defineProps(['player', 'isFirst', 'isOddLast']);
@@ -10,19 +10,23 @@ let lastTap = { time: 0, delta: 0 };
 let holdTimer = null;
 let rapidInterval = null;
 
+// Modal State
+const showModal = ref(false);
+const modalInput = ref("");
+const inputRef = ref(null); // Reference to the input DOM element
+
 const handleTouchStart = (delta) => {
     const now = Date.now();
     
-    // Double Tap Logic
-    if (lastTap.delta === delta && (now - lastTap.time) < 300) {
-        props.player.score -= delta; // Revert previous tap
+    // Double Tap
+    if (lastTap.delta === delta && (now - lastTap.time) < 150) {
+        props.player.score -= delta; // Revert
         clearTimers();
         lastTap = { time: 0, delta: 0 };
-        openPrompt();
+        openModal();
         return;
     }
 
-    // Single Tap / Hold Logic
     lastTap = { time: now, delta };
     props.player.score += delta;
 
@@ -40,13 +44,20 @@ const clearTimers = () => {
     clearInterval(rapidInterval);
 };
 
-const openPrompt = () => {
-    // Timeout to allow UI to settle
-    setTimeout(() => {
-        const input = prompt("Math allowed (e.g. +10, x2):");
-        const newScore = calculateNewScore(props.player.score, input);
-        if (newScore !== undefined) props.player.score = newScore;
-    }, 10);
+const openModal = () => {
+    modalInput.value = ""; // Clear previous
+    showModal.value = true;
+    
+    // Wait for DOM update, then focus input
+    nextTick(() => {
+        if(inputRef.value) inputRef.value.focus();
+    });
+};
+
+const submitModal = () => {
+    const newScore = calculateNewScore(props.player.score, modalInput.value);
+    if (newScore !== undefined) props.player.score = newScore;
+    showModal.value = false;
 };
 </script>
 
@@ -73,5 +84,24 @@ const openPrompt = () => {
          <div class="text-[6rem] leading-none font-black text-white drop-shadow-md pointer-events-none z-0 select-none">
              {{ player.score }}
          </div>
+
+         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" @click.stop>
+            <div class="bg-white p-6 rounded-xl w-3/4 max-w-sm shadow-2xl">
+                <h3 class="text-black text-lg font-bold mb-4 text-center">Update Score</h3>
+                
+                <input ref="inputRef" 
+                       v-model="modalInput" 
+                       type="tel" 
+                       placeholder="+10 or x2"
+                       class="w-full text-black text-2xl border-2 border-gray-300 rounded p-3 text-center mb-4 focus:outline-none focus:border-blue-500"
+                       @keydown.enter="submitModal" />
+                
+                <div class="flex gap-2">
+                    <button @click="showModal = false" class="flex-1 py-3 bg-gray-200 text-gray-800 rounded font-bold">Cancel</button>
+                    <button @click="submitModal" class="flex-1 py-3 bg-blue-600 text-white rounded font-bold">OK</button>
+                </div>
+            </div>
+         </div>
+
     </div>
 </template>

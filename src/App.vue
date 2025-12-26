@@ -9,7 +9,8 @@ const players = ref([]);
 
 const colors = [
     "#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", 
-    "#00897B", "#D81B60", "#3949AB", "#6D4C41", "#546E7A"
+    "#00897B", "#D81B60", "#3949AB", "#6D4C41", "#546E7A",
+    "#7CB342", "#039BE5" // New: Light Green & Light Blue
 ];
 
 // Persistence
@@ -34,7 +35,7 @@ watch([step, playerCount, players], () => {
 // Actions
 const adjustCount = (n) => {
     const v = playerCount.value + n;
-    if (v >= 2 && v <= 10) playerCount.value = v;
+    if (v >= 2 && v <= 12) playerCount.value = v;
 };
 
 const startGame = () => {
