@@ -7,4 +7,9 @@ body {
   -webkit-user-select: none;
   touch-action: none;
   overscroll-behavior: none;
+  
+  /* ADD THESE LINES: */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: #171717; /* Matches the status bar */
 }

@@ -1,25 +1,25 @@
 <script setup>
-import { ref, nextTick, defineProps, defineEmits } from 'vue';
+import { ref, defineProps, defineEmits } from 'vue';
 import { calculateNewScore } from '../logic/calculator';
 
 const props = defineProps(['player', 'isFirst', 'isOddLast']);
 const emit = defineEmits(['resetGame']);
 
-// Interaction State
+// --- INTERACTION STATE ---
 let lastTap = { time: 0, delta: 0 };
 let holdTimer = null;
 let rapidInterval = null;
 
-// Modal State
+// --- MODAL STATE ---
 const showModal = ref(false);
 const modalInput = ref("");
-const inputRef = ref(null); // Reference to the input DOM element
 
+// --- TOUCH LOGIC ---
 const handleTouchStart = (delta) => {
     const now = Date.now();
     
-    // Double Tap
-    if (lastTap.delta === delta && (now - lastTap.time) < 150) {
+    // Double Tap: < 200ms
+    if (lastTap.delta === delta && (now - lastTap.time) < 200) {
         props.player.score -= delta; // Revert
         clearTimers();
         lastTap = { time: 0, delta: 0 };
@@ -44,14 +44,18 @@ const clearTimers = () => {
     clearInterval(rapidInterval);
 };
 
+// --- KEYPAD LOGIC ---
 const openModal = () => {
-    modalInput.value = ""; // Clear previous
+    modalInput.value = "";
     showModal.value = true;
-    
-    // Wait for DOM update, then focus input
-    nextTick(() => {
-        if(inputRef.value) inputRef.value.focus();
-    });
+};
+
+const appendChar = (char) => {
+    modalInput.value += char;
+};
+
+const backspace = () => {
+    modalInput.value = modalInput.value.slice(0, -1);
 };
 
 const submitModal = () => {
@@ -70,7 +74,6 @@ const submitModal = () => {
               @touchstart.prevent="handleTouchStart(1)" @touchend="handleTouchEnd"
               @mousedown="handleTouchStart(1)" @mouseup="handleTouchEnd" @mouseleave="handleTouchEnd">
          </div>
-         
          <div class="absolute bottom-0 left-0 w-full h-1/2 z-10 active:bg-black/10"
               @touchstart.prevent="handleTouchStart(-1)" @touchend="handleTouchEnd"
               @mousedown="handleTouchStart(-1)" @mouseup="handleTouchEnd" @mouseleave="handleTouchEnd">
@@ -85,21 +88,43 @@ const submitModal = () => {
              {{ player.score }}
          </div>
 
-         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" @click.stop>
-            <div class="bg-white p-6 rounded-xl w-3/4 max-w-sm shadow-2xl">
-                <h3 class="text-black text-lg font-bold mb-4 text-center">Update Score</h3>
+         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" @click.stop>
+            <div class="bg-neutral-800 border border-neutral-700 p-4 rounded-2xl w-full max-w-xs shadow-2xl flex flex-col gap-3">
                 
-                <input ref="inputRef" 
-                       v-model="modalInput" 
-                       type="tel" 
-                       placeholder="+10 or x2"
-                       class="w-full text-black text-2xl border-2 border-gray-300 rounded p-3 text-center mb-4 focus:outline-none focus:border-blue-500"
-                       @keydown.enter="submitModal" />
-                
-                <div class="flex gap-2">
-                    <button @click="showModal = false" class="flex-1 py-3 bg-gray-200 text-gray-800 rounded font-bold">Cancel</button>
-                    <button @click="submitModal" class="flex-1 py-3 bg-blue-600 text-white rounded font-bold">OK</button>
+                <div class="bg-neutral-900 rounded-lg p-4 mb-2 text-right">
+                    <span class="text-neutral-400 text-sm block h-4">Current: {{ player.score }}</span>
+                    <span class="text-white text-3xl font-mono tracking-widest min-h-[40px] block">
+                        {{ modalInput || "0" }}
+                    </span>
                 </div>
+
+                <div class="grid grid-cols-4 gap-2">
+                    <button @click="appendChar('7')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">7</button>
+                    <button @click="appendChar('8')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">8</button>
+                    <button @click="appendChar('9')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">9</button>
+                    <button @click="appendChar('/')" class="bg-orange-600 text-white p-4 rounded text-xl font-bold active:bg-orange-500">÷</button>
+
+                    <button @click="appendChar('4')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">4</button>
+                    <button @click="appendChar('5')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">5</button>
+                    <button @click="appendChar('6')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">6</button>
+                    <button @click="appendChar('x')" class="bg-orange-600 text-white p-4 rounded text-xl font-bold active:bg-orange-500">×</button>
+
+                    <button @click="appendChar('1')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">1</button>
+                    <button @click="appendChar('2')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">2</button>
+                    <button @click="appendChar('3')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">3</button>
+                    <button @click="appendChar('-')" class="bg-orange-600 text-white p-4 rounded text-xl font-bold active:bg-orange-500">-</button>
+
+                    <button @click="backspace" class="bg-red-900/50 text-red-200 p-4 rounded text-xl font-bold active:bg-red-900">⌫</button>
+                    <button @click="appendChar('0')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">0</button>
+                    <button @click="appendChar('.')" class="bg-neutral-700 text-white p-4 rounded text-xl font-bold active:bg-neutral-600">.</button>
+                    <button @click="appendChar('+')" class="bg-orange-600 text-white p-4 rounded text-xl font-bold active:bg-orange-500">+</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <button @click="showModal = false" class="py-4 bg-neutral-600 text-white rounded-lg font-bold">CANCEL</button>
+                    <button @click="submitModal" class="py-4 bg-green-600 text-white rounded-lg font-bold shadow-lg shadow-green-900/50">APPLY</button>
+                </div>
+
             </div>
          </div>
 
