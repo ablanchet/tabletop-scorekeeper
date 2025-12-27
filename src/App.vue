@@ -1,19 +1,20 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import PlayerBox from './components/PlayerBox.vue';
+import CalculatorModal from './components/CalculatorModal.vue';
 
 const STORAGE_KEY = 'tabletop_scorekeeper_v2';
 const step = ref('setup');
 const playerCount = ref(4);
 const players = ref([]);
+const editingPlayer = ref(null); 
 
 const colors = [
     "#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", 
     "#00897B", "#D81B60", "#3949AB", "#6D4C41", "#546E7A",
-    "#7CB342", "#039BE5" // New: Light Green & Light Blue
+    "#7CB342", "#039BE5"
 ];
 
-// Persistence
 onMounted(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -32,7 +33,6 @@ watch([step, playerCount, players], () => {
     }));
 }, { deep: true });
 
-// Actions
 const adjustCount = (n) => {
     const v = playerCount.value + n;
     if (v >= 2 && v <= 12) playerCount.value = v;
@@ -40,15 +40,19 @@ const adjustCount = (n) => {
 
 const startGame = () => {
     players.value = Array.from({ length: playerCount.value }, (_, i) => ({
-        id: i, 
-        score: 0, 
-        color: colors[i]
+        id: i, score: 0, color: colors[i]
     }));
-    
     step.value = 'game';
 };
 
 const resetGame = () => { if(confirm("Exit to menu?")) step.value = 'setup'; };
+
+const openCalculator = (player) => { editingPlayer.value = player; };
+const closeCalculator = () => { editingPlayer.value = null; };
+const saveCalculator = (newScore) => {
+    if (editingPlayer.value) editingPlayer.value.score = newScore;
+    closeCalculator();
+};
 
 const gridClass = computed(() => players.value.length >= 9 ? 'grid-cols-3' : 'grid-cols-2');
 const isOddLast = (index) => (index === players.value.length - 1) && (players.value.length % 2 !== 0);
@@ -67,7 +71,7 @@ const isOddLast = (index) => (index === players.value.length - 1) && (players.va
             <button @click="startGame" class="bg-green-600 px-12 py-4 rounded-full text-xl font-bold shadow-lg">START</button>
         </div>
 
-        <div v-else class="grid h-full w-full" :class="gridClass">
+        <div v-else class="grid h-full w-full p-3 gap-3" :class="gridClass">
             <PlayerBox 
                 v-for="(player, index) in players"
                 :key="player.id"
@@ -75,7 +79,16 @@ const isOddLast = (index) => (index === players.value.length - 1) && (players.va
                 :isFirst="index === 0"
                 :isOddLast="isOddLast(index)"
                 @resetGame="resetGame"
+                @editScore="openCalculator" 
             />
         </div>
+
+        <CalculatorModal 
+            v-if="editingPlayer"
+            :currentScore="editingPlayer.score"
+            :color="editingPlayer.color"
+            @close="closeCalculator"
+            @save="saveCalculator"
+        />
     </div>
 </template>
